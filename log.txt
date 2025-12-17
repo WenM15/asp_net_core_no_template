@@ -1,0 +1,18 @@
+//Log
+
+Select C# Console App when creating project.
+
+Right click project -> Edit project file. This changes the .csproj file.
+
+Change <Project Sdk="Microsoft.NET.Sdk"> to <Project Sdk="Microsoft.NET.Sdk.Web">. This automatically includes everything from the Microsoft.AspNetCore.App framework.
+
+Change access specifier of Program class and Main method to public. (App will still run for some reason even if this step is not done)
+
+Replace Main's content with following code.
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+app.MapGet("/", () => "Response message");
+app.Run();
+
+
+ 
