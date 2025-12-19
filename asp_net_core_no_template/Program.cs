@@ -7,8 +7,19 @@
             var builder = WebApplication.CreateBuilder(args);
             var app = builder.Build();
 
-            // Simple route
             app.MapGet("/", () => "Replying to GET /");
+            app.MapGet("/echo", (HttpContext context) =>
+            {
+                return Results.Ok(new
+                {
+                    Method = context.Request.Method,
+                    Path = context.Request.Path.Value,
+                    Query = context.Request.Query.ToDictionary(
+                        q => q.Key,
+                        q => q.Value.ToString()
+                    )
+                });
+            });        
             app.Run();
         }
     }
