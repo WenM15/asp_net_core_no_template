@@ -1,9 +1,16 @@
 ﻿namespace asp_net_core_no_template
 {
     public class Program
-    {
+    {        
         public static void Main(string[] args)
         {
+            var services = new[]
+            {
+                new { Name = "MockApi", State = "OK", Dependencies = new[] { "MockCache" } },
+                new { Name = "MockCache", State = "Degraded", Dependencies = new[] { "MockDb" } },
+                new { Name = "MockDb", State = "OK", Dependencies = Array.Empty<string>() }
+            };
+
             var builder = WebApplication.CreateBuilder(args);
             var app = builder.Build();
 
@@ -45,6 +52,9 @@
             app.MapGet("/", () => "Replying to GET /");
 
             // Display details of incoming request.
+            // Try:
+            // /echo
+            // /echo?name=bob&age=8
             app.MapGet("/echo", (HttpContext context) =>
             {
                 return Results.Ok(new
@@ -59,29 +69,27 @@
             });
 
             // Route values.
+            // Try:
+            // /status/MockApi
+            // /status/MockCache
+            // /status/MockDb
+            // /status/RealApi
             app.MapGet("status/{service}", (string service) =>
             {
-                // Assume our web app provides a service called SimulatedDatabase.
-                if (service == "SimulatedDatabase")
-                {
-                    return Results.Ok(new
-                    {
-                        Service = service,
-                        Status = "OK"
-                    }
-                        );
-                }
-                else
-                {
-                    return Results.NotFound(new
-                    {
-                        Service = service,
-                        Error = "Service not found"
-                    }
+                var match = services.FirstOrDefault(s => string.Equals(s.Name, service, StringComparison.OrdinalIgnoreCase));
 
-                        );
+                if (match == null)
+                {
+                    return Results.NotFound(new {Service = service, Error = "Service not found"});
                 }
+
+                return Results.Ok(new {Service = match.Name, State = match.State });
             });
+
+            // Simple guideline on when to use route values and when to use query:
+            // Route identifies what resource. Query modifies how much data is returned.
+
+            // Route values + Query + Default values
             app.Run();
         }
     }
