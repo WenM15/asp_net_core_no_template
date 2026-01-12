@@ -91,13 +91,58 @@
             });
 
             // Query binding.
+            // Try:
+            // /services
+            // /services?state=Ok
+            // /services?state=Degraded
             app.MapGet("/services", (string? state) => 
             { 
                 var result = state == null ? services : services.Where(s => string.Equals(s.State, state, StringComparison.OrdinalIgnoreCase));
 
                 return Results.Ok(result.Select(s => new { s.Name, s.State }));
             });
-            
+
+            // Route + Query binding.
+            // Try:
+            // /dependencies/MockApi
+            // /dependencies/MockApi?recursive=true
+            app.MapGet("dependencies/{service}", (string service, bool recursive = false) => 
+            {
+                var match = services.FirstOrDefault(s =>
+                string.Equals(s.Name, service, StringComparison.OrdinalIgnoreCase));
+
+                if (match == null)
+                {
+                    return Results.NotFound(new
+                    {
+                        Service = service,
+                        Error = "Service not found"
+                    });
+                }
+
+                var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                void Collect(string name)
+                {
+                    var s = services.First(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+                    foreach (var d in s.Dependencies)
+                    {
+                        if (result.Add(d) && recursive)
+                        {
+                            Collect(d);
+                        }
+                    }
+                }
+
+                Collect(match.Name);
+
+                return Results.Ok(new
+                {
+                    Service = match.Name,
+                    Dependencies = result.ToArray()
+                });
+            });
+
             app.Run();
         }
     }
