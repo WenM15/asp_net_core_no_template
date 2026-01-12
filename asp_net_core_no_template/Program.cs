@@ -68,7 +68,10 @@
                 });
             });
 
-            // Route values.
+            // Simple guideline on when to use route values and when to use query:
+            // Route identifies what resource. Query modifies how much data is returned.
+
+            // Route binding.
             // Try:
             // /status/MockApi
             // /status/MockCache
@@ -76,7 +79,8 @@
             // /status/RealApi
             app.MapGet("status/{service}", (string service) =>
             {
-                var match = services.FirstOrDefault(s => string.Equals(s.Name, service, StringComparison.OrdinalIgnoreCase));
+                var match = services.FirstOrDefault(s => 
+                string.Equals(s.Name, service, StringComparison.OrdinalIgnoreCase));
 
                 if (match == null)
                 {
@@ -86,10 +90,14 @@
                 return Results.Ok(new {Service = match.Name, State = match.State });
             });
 
-            // Simple guideline on when to use route values and when to use query:
-            // Route identifies what resource. Query modifies how much data is returned.
+            // Query binding.
+            app.MapGet("/services", (string? state) => 
+            { 
+                var result = state == null ? services : services.Where(s => string.Equals(s.State, state, StringComparison.OrdinalIgnoreCase));
 
-            // Route values + Query + Default values
+                return Results.Ok(result.Select(s => new { s.Name, s.State }));
+            });
+            
             app.Run();
         }
     }
