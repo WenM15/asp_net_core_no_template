@@ -9,10 +9,16 @@ namespace asp_net_core_no_template
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Reset logging providers and do for console only.
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+
             // Dependency Injection
             builder.Services.AddSingleton<RequestCounter>();
 
             var app = builder.Build();
+      
+            var logger = app.Logger;
 
             // Add middleware.
             app.Use(async (context, next) =>
@@ -25,9 +31,10 @@ namespace asp_net_core_no_template
 
                 if (should_log)
                 {
-                    Console.WriteLine(
-                        $"Received request: {context.Request.Method} {context.Request.Path}"
-                    );
+                    //Console.WriteLine(
+                    //    $"Received request: {context.Request.Method} {context.Request.Path}"
+                    //);
+                    logger.LogInformation("Received request: {Method} {Path}", context.Request.Method, context.Request.Path);
                 }
 
                 var start_time = DateTime.UtcNow;
@@ -41,11 +48,17 @@ namespace asp_net_core_no_template
 
                 if (should_log)
                 {
-                    Console.WriteLine(
-                        $"Request processed: {context.Request.Method} {context.Request.Path}\n" +
-                        $"Status: {context.Response.StatusCode}\n" +
-                        $"Elapsed time: {elapsed_ms}ms"
-                    );
+                    //Console.WriteLine(
+                    //    $"Request processed: {context.Request.Method} {context.Request.Path}\n" +
+                    //    $"Status: {context.Response.StatusCode}\n" +
+                    //    $"Elapsed time: {elapsed_ms}ms"
+                    //);
+                    logger.LogInformation(
+                        "Request processed: {Method} {Path}\nStatus: {Status}\nElapsed time: {Elapsed}ms",
+                        context.Request.Method,
+                        context.Request.Path,
+                        context.Response.StatusCode,
+                        elapsed_ms.TotalMilliseconds);
                 }                
             });
 
